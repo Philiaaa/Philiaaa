@@ -1,0 +1,73 @@
+<Window x:Class="InventaireApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:InventaireApp.Views"
+        Title="Gestion Inventaire" Height="768" Width="1280"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Barre de navigation gauche -->
+        <Border Grid.Column="0" Background="{StaticResource PrimaryBrush}">
+            <DockPanel>
+                <!-- Logo / Titre -->
+                <Border DockPanel.Dock="Top" Padding="20,24,20,20"
+                        BorderBrush="#142840" BorderThickness="0,0,0,1">
+                    <StackPanel>
+                        <TextBlock Text="📦 Inventaire Pro"
+                                   Foreground="White" FontSize="16"
+                                   FontWeight="Bold"/>
+                        <TextBlock Text="Gestion commerciale"
+                                   Foreground="#7BA7C9" FontSize="11"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Menu de navigation -->
+                <StackPanel DockPanel.Dock="Top" Margin="0,8,0,0">
+                    <RadioButton Style="{StaticResource NavButton}"
+                                 GroupName="Nav" Tag="🏠"
+                                 IsChecked="True"
+                                 Checked="NavProduits_Checked">
+                        Produits
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}"
+                                 GroupName="Nav" Tag="👤"
+                                 Checked="NavClients_Checked">
+                        Clients
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}"
+                                 GroupName="Nav" Tag="📋"
+                                 Checked="NavCommandes_Checked">
+                        Commandes clients
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}"
+                                 GroupName="Nav" Tag="🚚"
+                                 Checked="NavFournisseurs_Checked">
+                        Commandes fournisseurs
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource NavButton}"
+                                 GroupName="Nav" Tag="🏷️"
+                                 Checked="NavRabais_Checked">
+                        Rabais
+                    </RadioButton>
+                </StackPanel>
+
+                <!-- Version -->
+                <TextBlock DockPanel.Dock="Bottom" Text="v1.0.0"
+                           Foreground="#4A6B8A" FontSize="11"
+                           HorizontalAlignment="Center" Margin="0,0,0,12"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Contenu principal -->
+        <Frame x:Name="MainFrame" Grid.Column="1"
+               NavigationUIVisibility="Hidden"/>
+    </Grid>
+</Window>

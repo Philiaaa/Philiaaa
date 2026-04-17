@@ -1,0 +1,197 @@
+<Page x:Class="InventaireApp.Views.CommandesFournisseurView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Commandes fournisseurs" Background="{StaticResource BackgroundBrush}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Commandes fournisseurs" FontSize="24" FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Gérez les achats fournisseurs liés aux commandes clients"
+                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="13"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="+ Nouvelle commande"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding NouvelleCommand}"
+                    VerticalAlignment="Center"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="480"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Liste + Générer depuis client -->
+            <Border Style="{StaticResource Card}" Margin="0,0,16,0">
+                <DockPanel>
+                    <!-- Générer depuis commande client -->
+                    <Border DockPanel.Dock="Top" Background="#EFF8FF"
+                            BorderBrush="#B8D4F0" BorderThickness="1"
+                            CornerRadius="4" Padding="10" Margin="0,0,0,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="GÉNÉRER DEPUIS UNE COMMANDE CLIENT"
+                                           Style="{StaticResource SectionLabel}"/>
+                                <ComboBox ItemsSource="{Binding CommandesClients}"
+                                          x:Name="ComboCommandeClient"
+                                          DisplayMemberPath="Id">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <Run Text="#{Binding Id}"/>
+                                                <Run Text=" – "/>
+                                                <Run Text="{Binding Client.NomComplet}"/>
+                                                <Run Text=" ("/>
+                                                <Run Text="{Binding DateCommande, StringFormat=dd/MM/yyyy}"/>
+                                                <Run Text=")"/>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Générer ➜"
+                                    Style="{StaticResource PrimaryButton}"
+                                    VerticalAlignment="Bottom" Margin="8,0,0,0"
+                                    Command="{Binding CreerDepuisCommandeClientCommand}"
+                                    CommandParameter="{Binding ElementName=ComboCommandeClient, Path=SelectedItem}"/>
+                        </Grid>
+                    </Border>
+
+                    <DataGrid DockPanel.Dock="Top"
+                              ItemsSource="{Binding Commandes}"
+                              SelectedItem="{Binding CommandeSelectionnee}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="40"/>
+                            <DataGridTextColumn Header="Fournisseur" Binding="{Binding NomFournisseur}" Width="*"/>
+                            <DataGridTextColumn Header="Cmd. client" Binding="{Binding CommandeClientId}" Width="80"/>
+                            <DataGridTextColumn Header="Date" Binding="{Binding DateCommande, StringFormat=dd/MM/yyyy}" Width="90"/>
+                            <DataGridTextColumn Header="Réception" Binding="{Binding DateReceptionPrevue, StringFormat=dd/MM/yyyy}" Width="90"/>
+                            <DataGridTextColumn Header="État" Binding="{Binding Etat}" Width="110"/>
+                            <DataGridTextColumn Header="Total" Binding="{Binding TotalCommande, StringFormat=C2}" Width="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+
+            <!-- Panneau édition -->
+            <Border Grid.Column="1" Style="{StaticResource Card}"
+                    Visibility="{Binding ModeEdition, Converter={StaticResource BoolToVisibility}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Commande fournisseur" FontSize="16" FontWeight="Bold"
+                                   Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
+
+                        <TextBlock Text="FOURNISSEUR" Style="{StaticResource SectionLabel}"/>
+                        <TextBox Text="{Binding EditFournisseur, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,0,10"/>
+
+                        <TextBlock Text="N° COMMANDE FOURNISSEUR" Style="{StaticResource SectionLabel}"/>
+                        <TextBox Text="{Binding EditNumeroCommande, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,0,10"/>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                <TextBlock Text="DATE COMMANDE" Style="{StaticResource SectionLabel}"/>
+                                <DatePicker SelectedDate="{Binding EditDateCommande}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                <TextBlock Text="RÉCEPTION PRÉVUE" Style="{StaticResource SectionLabel}"/>
+                                <DatePicker SelectedDate="{Binding EditDateReceptionPrevue}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="ÉTAT" Style="{StaticResource SectionLabel}"/>
+                        <ComboBox ItemsSource="{Binding Etats}"
+                                  SelectedItem="{Binding EditEtat}"
+                                  Margin="0,0,0,10"/>
+
+                        <TextBlock Text="NOTES" Style="{StaticResource SectionLabel}"/>
+                        <TextBox Text="{Binding EditNotes, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="50" TextWrapping="Wrap" AcceptsReturn="True"
+                                 Margin="0,0,0,12"/>
+
+                        <!-- Ajout produit -->
+                        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="10" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="AJOUTER UN PRODUIT" Style="{StaticResource SectionLabel}"
+                                           Margin="0,0,0,8"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" Margin="0,0,4,0"
+                                              ItemsSource="{Binding Produits}"
+                                              SelectedValuePath="Id"
+                                              SelectedValue="{Binding NouvelleLigneProduitId}"
+                                              DisplayMemberPath="Nom"/>
+                                    <TextBox Grid.Column="1" Margin="0,0,4,0"
+                                             Text="{Binding NouvelleLigneQuantite, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox Grid.Column="2" Margin="0,0,4,0"
+                                             Text="{Binding NouvelleLignePrix, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"/>
+                                    <Button Grid.Column="3" Content="+"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Command="{Binding AjouterLigneCommand}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <DataGrid ItemsSource="{Binding Lignes}" MaxHeight="200" Margin="0,0,0,12">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Produit" Binding="{Binding Produit.Nom}" Width="*"/>
+                                <DataGridTextColumn Header="Qté" Binding="{Binding Quantite}" Width="50"/>
+                                <DataGridTextColumn Header="Prix" Binding="{Binding PrixUnitaire, StringFormat=C2}" Width="80"/>
+                                <DataGridTemplateColumn Width="40">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="✕" Foreground="{StaticResource DangerBrush}"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Command="{Binding DataContext.SupprimerLigneCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Border Background="#FFF3F4" BorderBrush="{StaticResource DangerBrush}"
+                                BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,12"
+                                Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding StatusMessage}"
+                                       Foreground="{StaticResource DangerBrush}" FontSize="13"/>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="💾 Sauvegarder" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding SauvegarderCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Annuler" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding AnnulerCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

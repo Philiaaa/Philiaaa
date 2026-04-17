@@ -1,0 +1,246 @@
+<Page x:Class="InventaireApp.Views.CommandesView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:models="clr-namespace:InventaireApp.Models"
+      Title="Commandes clients" Background="{StaticResource BackgroundBrush}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- En-tête -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Commandes clients" FontSize="24" FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Gestion des commandes avec rabais et taxes QC"
+                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="13"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="+ Nouvelle commande"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding NouvelleCommandeCommand}"
+                    VerticalAlignment="Center"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="520"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Liste commandes -->
+            <Border Style="{StaticResource Card}" Margin="0,0,16,0">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding Recherche, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,8,0" Grid.Column="0"/>
+                        <ComboBox Grid.Column="1" Margin="0,0,8,0"
+                                  ItemsSource="{Binding EtatsCommande}"
+                                  SelectedItem="{Binding FiltreEtat}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Grid.Column="2" Content="🔍"
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding RechercherCommand}"/>
+                    </Grid>
+
+                    <DataGrid ItemsSource="{Binding Commandes}"
+                              SelectedItem="{Binding CommandeSelectionnee}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding Id}" Width="45"/>
+                            <DataGridTextColumn Header="Client" Binding="{Binding Client.NomComplet}" Width="*"/>
+                            <DataGridTextColumn Header="Date" Binding="{Binding DateCommande, StringFormat=dd/MM/yyyy}" Width="90"/>
+                            <DataGridTextColumn Header="Livraison" Binding="{Binding DateLivraisonSouhaitee, StringFormat=dd/MM/yyyy}" Width="90"/>
+                            <DataGridTextColumn Header="État" Binding="{Binding Etat}" Width="100"/>
+                            <DataGridTextColumn Header="Couleur" Binding="{Binding Couleur}" Width="80"/>
+                            <DataGridTextColumn Header="Total" Binding="{Binding TotalAvecTaxes, StringFormat=C2}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0"
+                                Visibility="{Binding CommandeSelectionnee, Converter={StaticResource NullToVisibility}}">
+                        <Button Content="✏️ Modifier" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding ModifierCommandeCommand}" Margin="0,0,8,0"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Panneau édition commande -->
+            <Border Grid.Column="1" Style="{StaticResource Card}"
+                    Visibility="{Binding ModeEdition, Converter={StaticResource BoolToVisibility}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Commande" FontSize="16" FontWeight="Bold"
+                                   Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
+
+                        <!-- Client -->
+                        <TextBlock Text="CLIENT *" Style="{StaticResource SectionLabel}"/>
+                        <ComboBox ItemsSource="{Binding Clients}"
+                                  SelectedValuePath="Id"
+                                  SelectedValue="{Binding EditClientId}"
+                                  DisplayMemberPath="Affichage"
+                                  Margin="0,0,0,10"/>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                <TextBlock Text="DATE COMMANDE" Style="{StaticResource SectionLabel}"/>
+                                <DatePicker SelectedDate="{Binding EditDateCommande}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                <TextBlock Text="DATE LIVRAISON" Style="{StaticResource SectionLabel}"/>
+                                <DatePicker SelectedDate="{Binding EditDateLivraison}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                <TextBlock Text="ÉTAT" Style="{StaticResource SectionLabel}"/>
+                                <ComboBox ItemsSource="{Binding EtatsCommande}"
+                                          SelectedItem="{Binding EditEtat}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                <TextBlock Text="COULEUR" Style="{StaticResource SectionLabel}"/>
+                                <TextBox Text="{Binding EditCouleur, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="RÉFÉRENCE" Style="{StaticResource SectionLabel}"/>
+                        <TextBox Text="{Binding EditReference, UpdateSourceTrigger=PropertyChanged}"
+                                 Margin="0,0,0,10"/>
+
+                        <TextBlock Text="NOTES" Style="{StaticResource SectionLabel}"/>
+                        <TextBox Text="{Binding EditNotes, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="50" TextWrapping="Wrap" AcceptsReturn="True"
+                                 Margin="0,0,0,12"/>
+
+                        <!-- Ajout d'une ligne produit -->
+                        <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="10" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="AJOUTER UN PRODUIT" Style="{StaticResource SectionLabel}"
+                                           Margin="0,0,0,8"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" Margin="0,0,4,0"
+                                              ItemsSource="{Binding Produits}"
+                                              SelectedValuePath="Id"
+                                              SelectedValue="{Binding NouvelleLigneProduitId}"
+                                              DisplayMemberPath="Nom"/>
+                                    <TextBox Grid.Column="1" Margin="0,0,4,0"
+                                             Text="{Binding NouvelleLigneQuantite, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <ComboBox Grid.Column="2" Margin="0,0,4,0"
+                                              ItemsSource="{Binding RabaisDisponibles}"
+                                              SelectedValuePath="Id"
+                                              SelectedValue="{Binding NouvelleLigneRabaisId}"
+                                              DisplayMemberPath="Nom"/>
+                                    <Button Grid.Column="3" Content="+"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Command="{Binding AjouterLigneCommand}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Lignes de commande -->
+                        <DataGrid ItemsSource="{Binding Lignes}" MaxHeight="200"
+                                  Margin="0,0,0,10">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Produit" Binding="{Binding Produit.Nom}" Width="*"/>
+                                <DataGridTextColumn Header="Qté" Binding="{Binding Quantite}" Width="40"/>
+                                <DataGridTextColumn Header="Prix" Binding="{Binding PrixUnitaire, StringFormat=C2}" Width="70"/>
+                                <DataGridTextColumn Header="Rabais" Binding="{Binding RabaisPourcentage, StringFormat=P0}" Width="60"/>
+                                <DataGridTextColumn Header="Total" Binding="{Binding TotalAvantTaxes, StringFormat=C2}" Width="80"/>
+                                <DataGridTemplateColumn Width="40">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="✕" Foreground="{StaticResource DangerBrush}"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Command="{Binding DataContext.SupprimerLigneCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!-- Récapitulatif taxes -->
+                        <Border Background="#F0F7FF" BorderBrush="#B8D4F0"
+                                BorderThickness="1" CornerRadius="4" Padding="12"
+                                Margin="0,0,0,12">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                    <RowDefinition Height="2"/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Sous-total" FontSize="12"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{Binding SousTotal, StringFormat=C2}" FontSize="12"/>
+                                <TextBlock Grid.Row="1" Text="TPS (5%)" FontSize="12"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{Binding TotalTPS, StringFormat=C2}" FontSize="12"/>
+                                <TextBlock Grid.Row="2" Text="TVQ (9.975%)" FontSize="12"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{Binding TotalTVQ, StringFormat=C2}" FontSize="12"/>
+                                <Separator Grid.Row="4" Grid.ColumnSpan="2" Margin="0,4"/>
+                                <TextBlock Grid.Row="5" Text="TOTAL" FontWeight="Bold"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1"
+                                           Text="{Binding GrandTotal, StringFormat=C2}"
+                                           FontWeight="Bold" FontSize="15"
+                                           Foreground="{StaticResource AccentBrush}"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="#FFF3F4" BorderBrush="{StaticResource DangerBrush}"
+                                BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,12"
+                                Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding StatusMessage}"
+                                       Foreground="{StaticResource DangerBrush}" FontSize="13"/>
+                        </Border>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="💾 Sauvegarder" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding SauvegarderCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Annuler" Style="{StaticResource SecondaryButton}"
+                                    Command="{Binding AnnulerCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>
