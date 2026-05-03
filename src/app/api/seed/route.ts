@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 
+export async function GET() {
+  return POST();
+}
+
 export async function POST() {
   const existing = await prisma.user.findUnique({ where: { email: "gestionnaire@vaillere.com" } });
   if (existing) {
