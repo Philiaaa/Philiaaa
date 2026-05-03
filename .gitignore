@@ -43,9 +43,9 @@ next-env.d.ts
 /src/generated/prisma
 
 # SQLite database
-prisma/dev.db
-prisma/dev.db-shm
-prisma/dev.db-wal
+*.db
+*.db-shm
+*.db-wal
 
 # Uploaded photos
 /public/uploads/
