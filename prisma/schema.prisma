@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  password    String
+  role        String       @default("INSPECTOR")
+  createdAt   DateTime     @default(now())
+  inspections Inspection[]
+}
+
+model Property {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  city      String
+  createdAt DateTime @default(now())
+  units     Unit[]
+}
+
+model Unit {
+  id          String       @id @default(cuid())
+  number      String
+  floor       Int?
+  propertyId  String
+  property    Property     @relation(fields: [propertyId], references: [id])
+  createdAt   DateTime     @default(now())
+  inspections Inspection[]
+}
+
+model Inspection {
+  id          String           @id @default(cuid())
+  type        String
+  status      String           @default("PENDING")
+  scheduledAt DateTime?
+  completedAt DateTime?
+  notes       String?
+  unitId      String
+  unit        Unit             @relation(fields: [unitId], references: [id])
+  inspectorId String?
+  inspector   User?            @relation(fields: [inspectorId], references: [id])
+  createdAt   DateTime         @default(now())
+  rooms       InspectionRoom[]
+}
+
+model InspectionRoom {
+  id           String    @id @default(cuid())
+  name         String
+  condition    String?
+  notes        String?
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id])
+  photos       Photo[]
+  createdAt    DateTime  @default(now())
+}
+
+model Photo {
+  id        String         @id @default(cuid())
+  url       String
+  caption   String?
+  roomId    String
+  room      InspectionRoom @relation(fields: [roomId], references: [id])
+  createdAt DateTime       @default(now())
+}
