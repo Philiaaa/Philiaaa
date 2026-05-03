@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "prisma migrate deploy && next start",
+    "startCommand": "export DATABASE_URL=${DATABASE_URL:-file:./prisma/dev.db} && prisma migrate deploy && next start",
     "healthcheckPath": "/",
     "restartPolicyType": "ON_FAILURE"
   }

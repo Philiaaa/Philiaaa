@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -51,14 +52,14 @@ model Inspection {
 }
 
 model InspectionRoom {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   name         String
   condition    String?
   notes        String?
   inspectionId String
   inspection   Inspection @relation(fields: [inspectionId], references: [id])
   photos       Photo[]
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime   @default(now())
 }
 
 model Photo {
