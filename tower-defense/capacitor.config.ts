@@ -10,6 +10,13 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'always',
     backgroundColor: '#1a1a2e',
+    allowsLinkPreview: false,
+    scrollEnabled: false,
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 0,
+    },
   },
 };
 

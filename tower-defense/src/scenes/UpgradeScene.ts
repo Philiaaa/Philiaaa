@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, C } from '../config';
 import { GameState, UpgradeDefinition } from '../types';
 import { selectUpgrades, applyUpgrade } from '../systems/UpgradeSystem';
+import { generateWave } from '../data/waves';
+import { Sfx } from '../systems/AudioSystem';
 
 export class UpgradeScene extends Phaser.Scene {
   constructor() { super({ key: 'UpgradeScene' }); }
@@ -109,10 +111,10 @@ export class UpgradeScene extends Phaser.Scene {
   private finishUpgrade(gs: GameState, upg: UpgradeDefinition | null, wave: number): void {
     if (upg) {
       applyUpgrade(gs, upg);
+      Sfx.upgradeSelect();
     }
 
     // Bonus gold for completing wave
-    const { generateWave } = require('../data/waves');
     const waveDef = generateWave(wave);
     gs.gold += waveDef.bonusGold;
 

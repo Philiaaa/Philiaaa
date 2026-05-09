@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, C } from '../config';
 import { GameState } from '../types';
+import { loadMeta } from '../systems/MetaProgression';
 
 export class GameOverScene extends Phaser.Scene {
   constructor() { super({ key: 'GameOverScene' }); }
 
-  create(data: { gameState: GameState; victory: boolean }): void {
-    const { gameState, victory } = data;
+  create(data: { gameState: GameState; victory: boolean; kills?: number }): void {
+    const { gameState, victory, kills = 0 } = data;
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
@@ -32,22 +33,25 @@ export class GameOverScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Stats panel
-    const panelW = 380;
-    const panelH = 160;
-    this.add.rectangle(cx, cy + 20, panelW, panelH, 0x111128, 0.9)
+    const meta = loadMeta();
+    const panelW = 420;
+    const panelH = 220;
+    this.add.rectangle(cx, cy + 30, panelW, panelH, 0x111128, 0.9)
       .setStrokeStyle(2, 0x2a3a6e, 1);
 
     const stats = [
-      [`Vagues survécues`, `${gameState.wave}`],
+      [`Vagues survécues`, `${gameState.wave}  (meilleur : ${meta.bestWave})`],
+      [`Ennemis éliminés`, `${kills}`],
       [`Score`, `${gameState.score.toLocaleString()}`],
-      [`Or total gagné`, `${gameState.gold} 🪙`],
-      [`Améliorations`, `${gameState.appliedUpgrades.length}`],
+      [`Améliorations choisies`, `${gameState.appliedUpgrades.length}`],
+      [`Total de parties`, `${meta.totalRuns}`],
+      [`Total kills global`, `${meta.totalKills}`],
     ];
 
     stats.forEach(([label, value], i) => {
-      const rowY = cy - 40 + i * 34;
-      this.add.text(cx - 160, rowY, label, { fontSize: '14px', color: '#8888aa' }).setOrigin(0, 0.5);
-      this.add.text(cx + 160, rowY, value, { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(1, 0.5);
+      const rowY = cy - 60 + i * 32;
+      this.add.text(cx - 190, rowY, label, { fontSize: '13px', color: '#8888aa' }).setOrigin(0, 0.5);
+      this.add.text(cx + 190, rowY, value, { fontSize: '13px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(1, 0.5);
     });
 
     // Buttons

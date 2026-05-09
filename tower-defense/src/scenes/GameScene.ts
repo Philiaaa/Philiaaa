@@ -10,7 +10,10 @@ import {
 import { TOWER_STATS, TOWER_ORDER } from '../data/towers';
 import { ENEMY_STATS } from '../data/enemies';
 import { generateWave } from '../data/waves';
+import { WARD_CLASSES } from '../data/classes';
 import { generatePath, pathToPixels, buildGrid } from '../systems/PathSystem';
+import { Sfx } from '../systems/AudioSystem';
+import { recordRunEnd } from '../systems/MetaProgression';
 
 type Phase = 'planning' | 'wave' | 'upgrading';
 
@@ -48,8 +51,13 @@ export class GameScene extends Phaser.Scene {
 
   // Selection
   private selectedType: TowerType | null = null;
+  private sellMode = false;
   private ghostRect: Phaser.GameObjects.Rectangle | null = null;
   private ghostRange: Phaser.GameObjects.Arc | null = null;
+
+  // Stats tracking
+  private totalKills = 0;
+  private totalGoldEarned = 0;
 
   // Graphics layers
   private gridGfx!: Phaser.GameObjects.Graphics;
@@ -67,6 +75,8 @@ export class GameScene extends Phaser.Scene {
   private towerBtns: Phaser.GameObjects.Rectangle[] = [];
   private selectedHighlights: Phaser.GameObjects.Rectangle[] = [];
   private txtEnemiesLeft!: Phaser.GameObjects.Text;
+  private sellBtn!: Phaser.GameObjects.Rectangle;
+  private sellBtnTxt!: Phaser.GameObjects.Text;
 
   constructor() { super({ key: 'GameScene' }); }
 
@@ -77,6 +87,9 @@ export class GameScene extends Phaser.Scene {
     this.enemies = [];
     this.projectiles = [];
     this.firePools = [];
+    this.totalKills = 0;
+    this.totalGoldEarned = this.gs.gold;
+    this.sellMode = false;
 
     this.generateLevel();
     this.drawGrid();
@@ -272,6 +285,29 @@ export class GameScene extends Phaser.Scene {
       bg.on('pointerdown', () => this.selectTowerType(type, i));
     });
 
+    // Sell tower button
+    const sellY = GRID_Y + GRID_PX_H - 82;
+    this.sellBtn = this.add.rectangle(RIGHT_PANEL_X + RIGHT_PANEL_W / 2, sellY, RIGHT_PANEL_W - 16, 34, C.btnRed)
+      .setInteractive({ useHandCursor: true }).setDepth(11).setStrokeStyle(1, 0xff6b6b, 0.5);
+    this.sellBtnTxt = this.add.text(RIGHT_PANEL_X + RIGHT_PANEL_W / 2, sellY, 'VENDRE', {
+      fontSize: '12px', fontStyle: 'bold', color: '#ffffff',
+    }).setOrigin(0.5).setDepth(12);
+
+    this.sellBtn.on('pointerdown', () => {
+      this.sellMode = !this.sellMode;
+      if (this.sellMode) {
+        this.selectedType = null;
+        this.clearGhost();
+        this.selectedHighlights.forEach(h => h.setStrokeStyle(0, 0, 0));
+        this.towerBtns.forEach(b => b.setFillStyle(0x1a1a30));
+        this.sellBtn.setFillStyle(0xff6b6b);
+        this.sellBtnTxt.setText('✗ VENDRE');
+      } else {
+        this.sellBtn.setFillStyle(C.btnRed);
+        this.sellBtnTxt.setText('VENDRE');
+      }
+    });
+
     // Start Wave button
     const sbY = GRID_Y + GRID_PX_H - 30;
     this.startWaveBtn = this.add.rectangle(RIGHT_PANEL_X + RIGHT_PANEL_W / 2, sbY, RIGHT_PANEL_W - 16, 46, C.btnGreen)
@@ -316,6 +352,9 @@ export class GameScene extends Phaser.Scene {
       if (this.selectedType && this.phase === 'planning') {
         const cell = this.pixelToCell(ptr.x, ptr.y);
         if (cell) this.tryPlaceTower(cell.col, cell.row);
+      } else if (this.sellMode && this.phase === 'planning') {
+        const cell = this.pixelToCell(ptr.x, ptr.y);
+        if (cell) this.trySellTower(cell.col, cell.row);
       } else {
         // Tap on tower to show/hide range
         this.toggleTowerRange(ptr.x, ptr.y);
@@ -324,6 +363,9 @@ export class GameScene extends Phaser.Scene {
 
     this.input.keyboard?.on('keydown-ESC', () => {
       this.selectedType = null;
+      this.sellMode = false;
+      this.sellBtn?.setFillStyle(C.btnRed);
+      this.sellBtnTxt?.setText('VENDRE');
       this.clearGhost();
       this.selectedHighlights.forEach(h => h.setStrokeStyle(0, 0, 0));
     });
@@ -379,12 +421,35 @@ export class GameScene extends Phaser.Scene {
     const stats = TOWER_STATS[this.selectedType!];
     if (this.gs.gold < stats.cost) {
       this.flashText('Or insuffisant !', RIGHT_PANEL_X + RIGHT_PANEL_W / 2, GRID_Y + GRID_PX_H / 2);
+      Sfx.insufficientGold();
       return;
     }
 
     this.gs.gold -= stats.cost;
     this.grid[row][col] = 'tower';
     this.spawnTowerVisual(col, row, this.selectedType!);
+    Sfx.towerPlace();
+    this.updateHUD();
+  }
+
+  private trySellTower(col: number, row: number): void {
+    if (this.grid[row][col] !== 'tower') return;
+    const idx = this.towers.findIndex(t => t.col === col && t.row === row);
+    if (idx === -1) return;
+
+    const tower = this.towers[idx];
+    const refund = Math.floor(TOWER_STATS[tower.type].cost * 0.6);
+    this.gs.gold += refund;
+
+    tower.body.destroy();
+    tower.innerDot.destroy();
+    tower.rangeIndicator.destroy();
+    this.towers.splice(idx, 1);
+    this.grid[row][col] = 'empty';
+    this.redrawGrid();
+
+    this.floatText(`+${refund}`, GRID_X + col * TILE_SIZE + TILE_SIZE / 2, GRID_Y + row * TILE_SIZE, '#ffd700');
+    Sfx.sellTower();
     this.updateHUD();
   }
 
@@ -423,8 +488,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getStartingTowers(): TowerType[] {
-    const { WARD_CLASSES } = require('../data/classes');
-    const cls = WARD_CLASSES.find((c: any) => c.id === this.gs.classId);
+    const cls = WARD_CLASSES.find(c => c.id === this.gs.classId);
     return cls?.startingTowers ?? [TowerType.ARROW, TowerType.ARROW];
   }
 
@@ -470,6 +534,7 @@ export class GameScene extends Phaser.Scene {
     this.waveDelay = 1000;
     this.updateHUD();
 
+    Sfx.waveStart();
     this.showWaveBanner(`VAGUE ${this.gs.wave}`);
   }
 
@@ -527,7 +592,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const scaleUp = stats.isBoss ? 1.4 : 1;
-    if (scaleUp !== 1) { body.setScale(scaleUp); }
+    if (scaleUp !== 1) { body.setScale(scaleUp); Sfx.bossSpawn(); }
 
     this.enemies.push({
       id: ++this.enemyIdCounter,
@@ -639,6 +704,7 @@ export class GameScene extends Phaser.Scene {
         const dmg = ENEMY_STATS[e.type].damage;
         this.gs.nexusHp -= dmg;
         this.flashNexusDamage();
+        Sfx.enemyHitNexus();
         this.destroyEnemy(e);
         if (this.gs.nexusHp <= 0) { this.gameOver(); return; }
         continue;
@@ -686,12 +752,18 @@ export class GameScene extends Phaser.Scene {
     const gold = Math.floor(rawGold * this.gs.globalModifiers.goldMultiplier);
     this.gs.gold += gold;
     this.gs.score += rawGold * 10;
+    this.totalKills++;
+    this.totalGoldEarned += gold;
 
-    this.floatText(`+${gold}🪙`, e.x, e.y, '#ffd700');
+    this.floatText(`+${gold}`, e.x, e.y, '#ffd700');
+    Sfx.enemyDeath();
+
+    if (e.type === EnemyType.BOSS) Sfx.bossSpawn();
 
     // Kill chain proc
     if (this.gs.globalModifiers.killChainChance > 0 && Math.random() < this.gs.globalModifiers.killChainChance) {
       this.triggerChainLightning(e.x, e.y);
+      Sfx.chainLightning();
     }
   }
 
@@ -970,8 +1042,14 @@ export class GameScene extends Phaser.Scene {
   // ─── Utility ───────────────────────────────────────────────────────
   private gameOver(): void {
     this.phase = 'planning';
+    Sfx.gameOver();
+    recordRunEnd(this.gs.wave, this.totalKills, this.totalGoldEarned, this.gs.classId);
     this.time.delayedCall(800, () => {
-      this.scene.start('GameOverScene', { gameState: this.gs, victory: false });
+      this.scene.start('GameOverScene', {
+        gameState: this.gs,
+        victory: false,
+        kills: this.totalKills,
+      });
     });
   }
 
