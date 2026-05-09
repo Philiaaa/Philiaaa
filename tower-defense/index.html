@@ -4,15 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
-  <!-- iOS PWA / Capacitor -->
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- iOS Safari PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Nexus Rift" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+
+  <!-- General -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#1a1a2e" />
-
-  <!-- Prevent zoom on double-tap -->
   <meta name="format-detection" content="telephone=no" />
+  <meta name="description" content="Tower Defense Roguelite — défendez votre Nexus !" />
 
   <title>Nexus Rift</title>
   <style>
@@ -23,13 +28,10 @@
       height: 100%;
       background: #1a1a2e;
       overflow: hidden;
-      /* Prevent iOS rubber-band scroll */
       overscroll-behavior: none;
-      /* Disable text selection and callouts */
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
-      /* Disable tap highlight */
       -webkit-tap-highlight-color: transparent;
       touch-action: none;
     }
@@ -38,15 +40,51 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      /* Respect iOS safe area (notch / home indicator) */
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding: env(safe-area-inset-top) env(safe-area-inset-right)
+               env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
     canvas { display: block; touch-action: none; }
+
+    /* iOS "Add to Home Screen" banner hint — shown only when not in standalone */
+    #install-hint {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,212,255,0.15);
+      border: 1px solid #00d4ff;
+      color: #00d4ff;
+      font-family: sans-serif;
+      font-size: 13px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-align: center;
+      z-index: 9999;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
   <div id="game-container"></div>
+  <div id="install-hint">
+    Appuyez sur <strong>Partager</strong> puis <strong>Sur l'écran d'accueil</strong><br>
+    pour installer le jeu comme une app
+  </div>
+
+  <script>
+    // Show install hint on iOS Safari (not in standalone mode)
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.navigator.standalone === true;
+    if (isIOS && !isStandalone) {
+      const hint = document.getElementById('install-hint');
+      hint.style.display = 'block';
+      // Hide after 6 seconds
+      setTimeout(() => { hint.style.display = 'none'; }, 6000);
+    }
+  </script>
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
