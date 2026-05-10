@@ -1,0 +1,18 @@
+{
+  "name": "Nexus Rift",
+  "short_name": "Nexus Rift",
+  "description": "Tower Defense Roguelite — défendez votre Nexus !",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

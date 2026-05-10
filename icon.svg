@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a1a2e"/>
+  <!-- Grid background -->
+  <line x1="170" y1="60" x2="170" y2="452" stroke="#2a2a4a" stroke-width="2"/>
+  <line x1="340" y1="60" x2="340" y2="452" stroke="#2a2a4a" stroke-width="2"/>
+  <line x1="60" y1="170" x2="452" y2="170" stroke="#2a2a4a" stroke-width="2"/>
+  <line x1="60" y1="340" x2="452" y2="340" stroke="#2a2a4a" stroke-width="2"/>
+  <!-- Nexus crystal (center) -->
+  <rect x="205" y="205" width="102" height="102" rx="8" fill="#162447" stroke="#00d4ff" stroke-width="3"/>
+  <polygon points="256,220 275,250 256,280 237,250" fill="#00d4ff" opacity="0.9"/>
+  <circle cx="256" cy="256" r="12" fill="#00d4ff" opacity="0.6"/>
+  <!-- Tower bottom-left -->
+  <rect x="75" y="345" width="80" height="80" rx="6" fill="#e74c3c" opacity="0.9"/>
+  <circle cx="115" cy="385" r="16" fill="white" opacity="0.5"/>
+  <!-- Tower top-right -->
+  <rect x="355" y="85" width="80" height="80" rx="6" fill="#74b9ff" opacity="0.9"/>
+  <circle cx="395" cy="125" r="16" fill="white" opacity="0.5"/>
+  <!-- Tower top-left -->
+  <rect x="75" y="85" width="80" height="80" rx="6" fill="#fdcb6e" opacity="0.9"/>
+  <circle cx="115" cy="125" r="16" fill="white" opacity="0.5"/>
+  <!-- Tower bottom-right -->
+  <rect x="355" y="345" width="80" height="80" rx="6" fill="#a29bfe" opacity="0.9"/>
+  <circle cx="395" cy="385" r="16" fill="white" opacity="0.5"/>
+  <!-- Glow effect on nexus -->
+  <circle cx="256" cy="256" r="65" fill="none" stroke="#00d4ff" stroke-width="2" opacity="0.3"/>
+</svg>
