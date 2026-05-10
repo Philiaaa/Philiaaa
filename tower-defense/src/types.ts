@@ -118,8 +118,8 @@ export interface TowerInstance {
   row: number;
   type: TowerType;
   cooldown: number;
-  body: Phaser.GameObjects.Rectangle;
-  innerDot: Phaser.GameObjects.Arc;
+  body: Phaser.GameObjects.Image;
+  innerDot?: Phaser.GameObjects.Arc;
   rangeIndicator: Phaser.GameObjects.Arc;
 }
 
@@ -141,7 +141,7 @@ export interface EnemyInstance {
   isDead: boolean;
   hitNexus: boolean;
   healTimer: number;
-  body: Phaser.GameObjects.Arc;
+  body: Phaser.GameObjects.Image;
   hpBarBg: Phaser.GameObjects.Rectangle;
   hpBarFg: Phaser.GameObjects.Rectangle;
   bossText?: Phaser.GameObjects.Text;
@@ -154,6 +154,6 @@ export interface ProjectileInstance {
   special?: string;
   specialVal?: number;
   aoeRadius?: number;
-  body: Phaser.GameObjects.Arc;
+  body: Phaser.GameObjects.Image;
   active: boolean;
 }

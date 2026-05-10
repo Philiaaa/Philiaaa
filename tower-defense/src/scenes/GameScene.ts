@@ -14,6 +14,7 @@ import { WARD_CLASSES } from '../data/classes';
 import { generatePath, pathToPixels, buildGrid } from '../systems/PathSystem';
 import { Sfx } from '../systems/AudioSystem';
 import { recordRunEnd } from '../systems/MetaProgression';
+import { generateAllTextures } from '../systems/TextureFactory';
 
 type Phase = 'planning' | 'wave' | 'upgrading';
 
@@ -52,7 +53,7 @@ export class GameScene extends Phaser.Scene {
   // Selection
   private selectedType: TowerType | null = null;
   private sellMode = false;
-  private ghostRect: Phaser.GameObjects.Rectangle | null = null;
+  private ghostRect: Phaser.GameObjects.Image | null = null;
   private ghostRange: Phaser.GameObjects.Arc | null = null;
 
   // Stats tracking
@@ -79,6 +80,10 @@ export class GameScene extends Phaser.Scene {
   private sellBtnTxt!: Phaser.GameObjects.Text;
 
   constructor() { super({ key: 'GameScene' }); }
+
+  preload(): void {
+    generateAllTextures(this);
+  }
 
   create(data: { gameState: GameState }): void {
     this.gs = data.gameState;
@@ -137,39 +142,44 @@ export class GameScene extends Phaser.Scene {
         const py = GRID_Y + row * TILE_SIZE;
         const tile = this.grid[row][col];
 
-        let fill: number = C.gridEmpty;
-        if (tile === 'path') fill = C.gridPath;
-        else if (tile === 'nexus') fill = C.nexusTile;
-        else if (tile === 'spawn') fill = C.spawnTile;
-
-        this.gridGfx.fillStyle(fill, 1);
-        this.gridGfx.fillRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-
-        // Border
-        this.gridGfx.lineStyle(1, C.gridBorder, 0.5);
-        this.gridGfx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+        if (tile === 'path') {
+          this.gridGfx.fillStyle(0x3d2b15);
+          this.gridGfx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          const hw = TILE_SIZE / 2 - 2;
+          this.gridGfx.fillStyle(0x4a3520, 0.65);
+          this.gridGfx.fillRoundedRect(px + 1, py + 1, hw, hw, 2);
+          this.gridGfx.fillRoundedRect(px + TILE_SIZE / 2 + 1, py + 1, hw, hw, 2);
+          this.gridGfx.fillRoundedRect(px + 1, py + TILE_SIZE / 2 + 1, hw, hw, 2);
+          this.gridGfx.fillRoundedRect(px + TILE_SIZE / 2 + 1, py + TILE_SIZE / 2 + 1, hw, hw, 2);
+          this.gridGfx.fillStyle(0x5a3a1a, 0.2);
+          this.gridGfx.fillRoundedRect(px + 3, py + 3, hw - 4, hw - 4, 1);
+        } else if (tile === 'nexus') {
+          this.gridGfx.fillStyle(0x002244);
+          this.gridGfx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          this.gridGfx.lineStyle(2, 0x00d4ff, 0.9);
+          this.gridGfx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+          this.gridGfx.fillStyle(0x00d4ff, 0.1);
+          this.gridGfx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        } else if (tile === 'spawn') {
+          this.gridGfx.fillStyle(0x3a0a0a);
+          this.gridGfx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          this.gridGfx.lineStyle(1, 0xff4444, 0.6);
+          this.gridGfx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+        } else {
+          const isDark = (row + col) % 2 === 0;
+          this.gridGfx.fillStyle(isDark ? 0x0d1520 : 0x0f1a26);
+          this.gridGfx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+          this.gridGfx.lineStyle(1, 0x1a2a3a, 0.35);
+          this.gridGfx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
+        }
       }
     }
 
-    // Nexus glow decoration
+    // NEXUS label
     const nx = GRID_X + this.nexusCol * TILE_SIZE + TILE_SIZE / 2;
     const ny = GRID_Y + this.nexusRow * TILE_SIZE + TILE_SIZE / 2;
-    this.gridGfx.lineStyle(2, C.nexusGlow, 0.8);
-    this.gridGfx.strokeRect(
-      GRID_X + this.nexusCol * TILE_SIZE + 3,
-      GRID_Y + this.nexusRow * TILE_SIZE + 3,
-      TILE_SIZE - 6, TILE_SIZE - 6
-    );
-    this.gridGfx.fillStyle(C.nexusGlow, 0.15);
-    this.gridGfx.fillRect(
-      GRID_X + this.nexusCol * TILE_SIZE + 3,
-      GRID_Y + this.nexusRow * TILE_SIZE + 3,
-      TILE_SIZE - 6, TILE_SIZE - 6
-    );
-
-    // NEXUS label
-    this.add.text(nx, ny, 'N', {
-      fontSize: '14px', fontStyle: 'bold', color: '#00d4ff',
+    this.add.text(nx, ny, '⬡', {
+      fontSize: '18px', fontStyle: 'bold', color: '#00d4ff',
     }).setOrigin(0.5).setDepth(1);
 
     // SPAWN label
@@ -389,15 +399,16 @@ export class GameScene extends Phaser.Scene {
     const px = GRID_X + col * TILE_SIZE + TILE_SIZE / 2;
     const py = GRID_Y + row * TILE_SIZE + TILE_SIZE / 2;
     const affordable = this.gs.gold >= stats.cost;
-    const color = affordable ? stats.color : 0xff0000;
 
-    this.ghostRect = this.add.rectangle(px, py, TILE_SIZE - 4, TILE_SIZE - 4, color, 0.5)
-      .setStrokeStyle(2, color, 0.8).setDepth(6);
+    this.ghostRect = this.add.image(px, py, `tower_${this.selectedType}`)
+      .setAlpha(0.55).setDepth(6);
+    if (!affordable) this.ghostRect.setTint(0xff4444);
 
     const tMod = this.gs.towerModifiers[this.selectedType];
     const rangeInPx = stats.range * tMod.rangeMultiplier * TILE_SIZE;
-    this.ghostRange = this.add.arc(px, py, rangeInPx, 0, 360, false, color, 0.06)
-      .setStrokeStyle(1, color, 0.3).setDepth(5);
+    const rangeColor = affordable ? stats.color : 0xff4444;
+    this.ghostRange = this.add.arc(px, py, rangeInPx, 0, 360, false, rangeColor, 0.06)
+      .setStrokeStyle(1, rangeColor, 0.3).setDepth(5);
   }
 
   private clearGhost(): void {
@@ -442,7 +453,7 @@ export class GameScene extends Phaser.Scene {
     this.gs.gold += refund;
 
     tower.body.destroy();
-    tower.innerDot.destroy();
+    tower.innerDot?.destroy();
     tower.rangeIndicator.destroy();
     this.towers.splice(idx, 1);
     this.grid[row][col] = 'empty';
@@ -463,16 +474,9 @@ export class GameScene extends Phaser.Scene {
     const rangeIndicator = this.add.arc(px, py, rangeInPx, 0, 360, false, stats.color, 0.07)
       .setStrokeStyle(1, stats.color, 0.3).setDepth(1).setVisible(false);
 
-    const body = this.add.rectangle(px, py, TILE_SIZE - 6, TILE_SIZE - 6, stats.color)
-      .setStrokeStyle(2, 0xffffff, 0.25).setDepth(3);
-    const innerDot = this.add.arc(px, py, 6, 0, 360, false, 0xffffff, 0.5).setDepth(3);
+    const body = this.add.image(px, py, `tower_${type}`).setDepth(3);
 
-    // Type initial
-    this.add.text(px, py + TILE_SIZE / 2 - 8, stats.name[0], {
-      fontSize: '9px', color: '#ffffff',
-    }).setOrigin(0.5).setDepth(3).setAlpha(0.6);
-
-    this.towers.push({ col, row, type, cooldown: 0, body, innerDot, rangeIndicator });
+    this.towers.push({ col, row, type, cooldown: 0, body, rangeIndicator });
   }
 
   private placeStartingTowers(): void {
@@ -578,8 +582,7 @@ export class GameScene extends Phaser.Scene {
     const startPx = this.pathPx[0];
     const r = stats.radius;
 
-    const body = this.add.arc(startPx.x, startPx.y, r, 0, 360, false, stats.color).setDepth(4);
-    body.setStrokeStyle(2, 0x000000, 0.5);
+    const body = this.add.image(startPx.x, startPx.y, `enemy_${type}`).setDepth(4);
 
     const hpBarBg = this.add.rectangle(startPx.x, startPx.y - r - 8, r * 2, 5, 0x000000, 0.8).setDepth(5);
     const hpBarFg = this.add.rectangle(startPx.x - r, startPx.y - r - 8, r * 2, 5, C.hpGreen).setDepth(5).setOrigin(0, 0.5);
@@ -589,10 +592,8 @@ export class GameScene extends Phaser.Scene {
       bossText = this.add.text(startPx.x, startPx.y - r - 20, 'BOSS', {
         fontSize: '9px', fontStyle: 'bold', color: '#ff4757',
       }).setOrigin(0.5).setDepth(5);
+      Sfx.bossSpawn();
     }
-
-    const scaleUp = stats.isBoss ? 1.4 : 1;
-    if (scaleUp !== 1) { body.setScale(scaleUp); Sfx.bossSpawn(); }
 
     this.enemies.push({
       id: ++this.enemyIdCounter,
@@ -720,11 +721,9 @@ export class GameScene extends Phaser.Scene {
       this.updateEnemyBar(e);
 
       // Color tint for status
-      if (e.burnMs > 0) e.body.setFillStyle(Phaser.Display.Color.Interpolate.ColorWithColor(
-        Phaser.Display.Color.ValueToColor(ENEMY_STATS[e.type].color),
-        Phaser.Display.Color.ValueToColor(0xff6b00), 100, 60).color);
-      else if (e.slowMs > 0) e.body.setFillStyle(0xaaddff);
-      else e.body.setFillStyle(ENEMY_STATS[e.type].color);
+      if (e.burnMs > 0) e.body.setTint(0xff4400);
+      else if (e.slowMs > 0) e.body.setTint(0x88ccff);
+      else e.body.clearTint();
     }
   }
 
@@ -757,6 +756,22 @@ export class GameScene extends Phaser.Scene {
 
     this.floatText(`+${gold}`, e.x, e.y, '#ffd700');
     Sfx.enemyDeath();
+
+    // Death spark burst
+    const sparkColors = [0xffdd00, 0xff8800, 0xff4400, 0xffffff, 0xffaa44];
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const spark = this.add.image(e.x, e.y, 'spark').setDepth(9).setTint(sparkColors[i % sparkColors.length]);
+      this.tweens.add({
+        targets: spark,
+        x: e.x + Math.cos(angle) * Phaser.Math.Between(20, 36),
+        y: e.y + Math.sin(angle) * Phaser.Math.Between(20, 36),
+        alpha: 0, scaleX: 0, scaleY: 0,
+        duration: Phaser.Math.Between(250, 400),
+        ease: 'Power2',
+        onComplete: () => spark.destroy(),
+      });
+    }
 
     if (e.type === EnemyType.BOSS) Sfx.bossSpawn();
 
@@ -915,7 +930,7 @@ export class GameScene extends Phaser.Scene {
       ? (stats.specialValue || 1.5) * tMod.rangeMultiplier * TILE_SIZE * 0.6
       : 0;
 
-    const pBody = this.add.arc(fromX, fromY, 5, 0, 360, false, stats.color).setDepth(6);
+    const pBody = this.add.image(fromX, fromY, `proj_${stats.type}`).setDepth(6);
 
     this.projectiles.push({
       targetId: target.id,
